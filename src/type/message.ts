@@ -1,4 +1,4 @@
-export default interface message {
+export interface message {
   mid: string
   createdat: number
   uid: string
