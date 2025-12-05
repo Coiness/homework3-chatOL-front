@@ -1,34 +1,10 @@
 import { useState } from 'react'
 import { useIsMobileStore } from '@/store/useIsMobileStore'
-
-// 临时占位组件
-const ChatList = ({ onSelect }: { onSelect: (id: string) => void }) => (
-  <div className="w-full md:w-64 border-r h-full bg-gray-100 p-4">
-    <h2 className="font-bold mb-4">消息列表</h2>
-    {['1', '2', '3'].map((id) => (
-      <div
-        key={id}
-        onClick={() => onSelect(id)}
-        className="p-3 bg-white mb-2 rounded cursor-pointer hover:bg-blue-50"
-      >
-        用户 {id}
-      </div>
-    ))}
-  </div>
-)
-
-const ChatRoom = ({ chatId, onBack }: { chatId: string | null; onBack: () => void }) => (
-  <div className="flex-1 h-full bg-white flex flex-col">
-    <div className="h-12 border-b flex items-center px-4">
-      {/* 仅在移动端显示返回按钮 */}
-      <button onClick={onBack} className="mr-4 md:hidden text-blue-500">
-        &lt; 返回
-      </button>
-      <span className="font-bold">正在与 用户 {chatId} 聊天</span>
-    </div>
-    <div className="flex-1 p-4">聊天内容区域...</div>
-  </div>
-)
+import { useChatStore } from '@/store/useChatStore'
+import { jsBridge } from '@/lib/jsBridge'
+import { Card } from '@/components/ui/card'
+import ChatRoom from '@/components/ChatRoom'
+import ChatList from '@/components/ChatList'
 
 const EmptyState = () => (
   <div className="flex-1 h-full flex items-center justify-center text-gray-400">
@@ -39,6 +15,7 @@ const EmptyState = () => (
 export const ChatLayout = () => {
   const isMobile = useIsMobileStore((state) => state.isMobile)
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
+  const { user, messages, addMessage, sendMessage, logout } = useChatStore()
 
   const handleSelectChat = (chatId: string) => {
     setActiveChatId(chatId)
@@ -48,20 +25,105 @@ export const ChatLayout = () => {
     setActiveChatId(null)
   }
 
+  const handleSend = (content: string, type: 'text' | 'image' = 'text') => {
+    if (!user || !activeChatId) return
+
+    const newMessage = {
+      mid: Date.now().toString(),
+      createdat: Date.now(),
+      uid: user.uid,
+      chatid: activeChatId,
+      content,
+      type,
+    }
+    addMessage(newMessage) // 本地立即显示
+    sendMessage(newMessage) // 发送到服务器
+  }
+
+  const filteredMessages = messages.filter((msg) => msg.chatid === activeChatId)
+
   if (isMobile) {
     if (activeChatId) {
-      return <ChatRoom chatId={activeChatId} onBack={handleBack} />
+      return (
+        <div className="h-screen ">
+          <ChatRoom
+            chatId={activeChatId}
+            message={filteredMessages}
+            currentUID={user?.uid || ''}
+            onBack={handleBack}
+            onSend={handleSend}
+          />
+        </div>
+      )
     }
-    return <ChatList onSelect={handleSelectChat} />
+    return (
+      <div className="flex flex-col h-screen w-full min-h-0">
+        <Card className="rounded-none border-x-0 border-t-0 flex-shrink-0 min-h-0">
+          <div className="flex justify-between items-center p-4">
+            <h1 className="text-lg font-semibold">Chat App</h1>
+            <button
+              onClick={() => {
+                console.log('logout button clicked')
+                logout()
+                localStorage.removeItem('chat_user_token')
+                if (jsBridge.isAvailable()) {
+                  jsBridge.setUserToken('')
+                }
+              }}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              退出登录
+            </button>
+          </div>
+        </Card>
+        <div className="flex-1 ">
+          <ChatList onSelect={handleSelectChat} activeChatId={activeChatId} />
+        </div>
+      </div>
+    )
   } else {
     return (
-      <div className="flex h-screen w-full overflow-hidden">
-        <ChatList onSelect={handleSelectChat}></ChatList>
-        {activeChatId ? (
-          <ChatRoom chatId={activeChatId} onBack={handleBack}></ChatRoom>
-        ) : (
-          <EmptyState></EmptyState>
-        )}
+      <div className="flex h-screen w-full  px-8">
+        <div className="flex flex-col w-full h-screen min-h-0">
+          <Card className="rounded-none border-x-0 border-t-0 min-h-0">
+            <div className="flex justify-between items-center p-4">
+              <h1 className="text-lg font-semibold">Chat App</h1>
+              <button
+                onClick={() => {
+                  console.log('logout button clicked')
+                  logout()
+                  localStorage.removeItem('chat_user_token')
+                  if (jsBridge.isAvailable()) {
+                    jsBridge.setUserToken('')
+                  }
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                退出登录
+              </button>
+            </div>
+          </Card>
+          <div className="flex flex-1 min-h-0">
+            <div className="w-80 flex-shrink-0 min-h-0 overflow-auto">
+              <ChatList onSelect={handleSelectChat} activeChatId={activeChatId}></ChatList>
+            </div>
+            {activeChatId ? (
+              <div className="flex-1 min-h-0">
+                <ChatRoom
+                  chatId={activeChatId}
+                  message={filteredMessages}
+                  currentUID={user?.uid || ''}
+                  onBack={handleBack}
+                  onSend={handleSend}
+                ></ChatRoom>
+              </div>
+            ) : (
+              <div className="flex-1">
+                <EmptyState></EmptyState>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     )
   }

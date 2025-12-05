@@ -1,9 +1,14 @@
 import { useEffect } from 'react'
 import { useIsMobileStore } from './store/useIsMobileStore'
+import { useChatStore } from './store/useChatStore'
 import { ChatLayout } from '@/components/ChatLayout'
+import Auth from '@/components/Auth'
 
 function App() {
   const setIsMobile = useIsMobileStore((state) => state.setIsMobile)
+  const user = useChatStore((state) => state.user)
+
+  console.log('App render, user:', user)
 
   useEffect(() => {
     const handleResize = () => {
@@ -14,8 +19,12 @@ function App() {
     return () => window.removeEventListener('resize', handleResize)
   }, [setIsMobile])
 
+  if (!user) {
+    return <Auth />
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8">
+    <div className="flex h-screen  flex-col items-center justify-center gap-6 bg-background">
       <ChatLayout></ChatLayout>
     </div>
   )

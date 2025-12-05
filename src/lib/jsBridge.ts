@@ -7,6 +7,7 @@ interface AndroidBridge {
 declare global {
   interface Window {
     AndroidBridge?: AndroidBridge
+    AndroidInterface?: AndroidBridge // 兼容旧命名
     __JSB_onMessage?: (response: unknown) => void
   }
 }
@@ -132,8 +133,13 @@ class JSBridge {
     return this.call('echo', data)
   }
 
-  // 在这里添加你的新方法...
-  // public getUserToken() { return this.call('getUserToken'); }
+  public getUserToken() {
+    return this.call('getUserToken')
+  }
+
+  public setUserToken(token: string) {
+    return this.call('setUserToken', token)
+  }
 }
 
 // 导出单例
