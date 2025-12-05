@@ -10,7 +10,7 @@ interface IProps {
   message: message[]
   currentUID: string
   onBack: () => void
-  onSend: (content: string, type?: 'text' | 'image') => void
+  onSend: (content: string, type?: 'text' | 'image' | 'file') => void
   children?: ReactNode
 }
 

@@ -1,13 +1,14 @@
 import React, { memo, useState, useRef } from 'react'
 import type { FC, ReactNode } from 'react'
+import type { EmojiClickData } from 'emoji-picker-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { ImageIcon, Send, Smile } from 'lucide-react'
+import { ImageIcon, Send, Smile, Paperclip } from 'lucide-react'
 import { compressImage } from '@/lib/imageUtils'
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
+import EmojiPicker from 'emoji-picker-react'
 
 interface IProps {
-  onSend: (message: string, type?: 'text' | 'image') => void
+  onSend: (message: string, type?: 'text' | 'image' | 'file') => void
   children?: ReactNode
 }
 
@@ -15,6 +16,7 @@ const ChatInput: FC<IProps> = ({ onSend }) => {
   const [message, setMessage] = useState('')
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const docInputRef = useRef<HTMLInputElement>(null)
 
   const handleSend = () => {
     if (message.trim()) {
@@ -30,6 +32,29 @@ const ChatInput: FC<IProps> = ({ onSend }) => {
 
   const handleImageSelect = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleDocSelect = () => {
+    docInputRef.current?.click()
+  }
+
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // 检查文件大小 (限制为20MB)
+      if (file.size > 20 * 1024 * 1024) {
+        alert('文件大小不能超过20MB')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string
+        onSend(base64, 'file')
+      }
+      reader.readAsDataURL(file)
+    }
+    e.target.value = ''
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,8 +106,12 @@ const ChatInput: FC<IProps> = ({ onSend }) => {
         onChange={handleFileChange}
         className="hidden"
       />
+      <input ref={docInputRef} type="file" onChange={handleDocChange} className="hidden" />
       <Button variant="outline" size="icon" onClick={handleImageSelect} className="h-12 w-12">
         <ImageIcon className="h-5 w-5" />
+      </Button>
+      <Button variant="outline" size="icon" onClick={handleDocSelect} className="h-12 w-12">
+        <Paperclip className="h-5 w-5" />
       </Button>
       <Button
         variant="outline"

@@ -25,7 +25,7 @@ export const ChatLayout = () => {
     setActiveChatId(null)
   }
 
-  const handleSend = (content: string, type: 'text' | 'image' = 'text') => {
+  const handleSend = (content: string, type: 'text' | 'image' | 'file' = 'text') => {
     if (!user || !activeChatId) return
 
     const newMessage = {
