@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useIsMobileStore } from '@/store/useIsMobileStore'
 import { useChatStore } from '@/store/useChatStore'
 import { jsBridge } from '@/lib/jsBridge'
@@ -25,20 +25,23 @@ export const ChatLayout = () => {
     setActiveChatId(null)
   }
 
-  const handleSend = (content: string, type: 'text' | 'image' | 'file' = 'text') => {
-    if (!user || !activeChatId) return
+  const handleSend = useCallback(
+    (content: string, type: 'text' | 'image' | 'file' = 'text') => {
+      if (!user || !activeChatId) return
 
-    const newMessage = {
-      mid: Date.now().toString(),
-      createdat: Date.now(),
-      uid: user.uid,
-      chatid: activeChatId,
-      content,
-      type,
-    }
-    addMessage(newMessage) // 本地立即显示
-    sendMessage(newMessage) // 发送到服务器
-  }
+      const newMessage = {
+        mid: Date.now().toString(),
+        createdat: Date.now(),
+        uid: user.uid,
+        chatid: activeChatId,
+        content,
+        type,
+      }
+      addMessage(newMessage) // 本地立即显示
+      sendMessage(newMessage) // 发送到服务器
+    },
+    [user, activeChatId, addMessage, sendMessage]
+  )
 
   const filteredMessages = messages.filter((msg) => msg.chatid === activeChatId)
 

@@ -64,8 +64,28 @@ export default function Auth() {
 
   async function handleDemoLogin() {
     try {
+      // 智能判断API地址（与WebSocket逻辑保持一致）
+      let apiUrl = 'http://localhost:8080/api/login'
+
+      const hostname = window.location.hostname
+      const userAgent = navigator.userAgent.toLowerCase()
+      const isAndroid = userAgent.includes('android')
+
+      // 策略 1: 如果 hostname 已经是 IP (如 10.0.2.2 或 192.168.x.x)，直接用它
+      if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+        apiUrl = `http://${hostname}:8080/api/login`
+      }
+      // 策略 2: 如果是在 Android 设备上，且 hostname 是 localhost，
+      // 这通常意味着没有做 adb reverse，我们尝试用 10.0.2.2
+      else if (isAndroid) {
+        console.log('[Auth] Android environment detected, using 10.0.2.2 for API')
+        apiUrl = 'http://10.0.2.2:8080/api/login'
+      }
+
+      console.log(`[Auth] Calling API: ${apiUrl} (Host: ${hostname}, IsAndroid: ${isAndroid})`)
+
       // 调用后端登录 API 获取真正的 JWT token
-      const response = await fetch('http://localhost:8080/api/login', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
