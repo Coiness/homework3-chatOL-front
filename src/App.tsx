@@ -1,27 +1,31 @@
-import { Button } from '@/components/ui/button'
-import { useCounterStore } from '@/store/useCounterStore'
+import { useEffect } from 'react'
+import { useIsMobileStore } from './store/useIsMobileStore'
+import { useChatStore } from './store/useChatStore'
+import { ChatLayout } from '@/components/ChatLayout'
+import Auth from '@/components/Auth'
 
 function App() {
-  const { count, increment, decrement, reset } = useCounterStore()
+  const setIsMobile = useIsMobileStore((state) => state.setIsMobile)
+  const user = useChatStore((state) => state.user)
+
+  console.log('App render, user:', user)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [setIsMobile])
+
+  if (!user) {
+    return <Auth />
+  }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8">
-      <h1 className="text-4xl font-bold text-foreground">Chat Online Frontend</h1>
-      <p className="text-muted-foreground">
-        React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui + Zustand
-      </p>
-      <div className="flex flex-col items-center gap-4 rounded-lg border border-border bg-card p-6 shadow-sm">
-        <p className="text-2xl font-semibold">Count: {count}</p>
-        <div className="flex gap-2">
-          <Button onClick={decrement} variant="outline">
-            Decrement
-          </Button>
-          <Button onClick={reset} variant="secondary">
-            Reset
-          </Button>
-          <Button onClick={increment}>Increment</Button>
-        </div>
-      </div>
+    <div className="flex h-screen  flex-col items-center justify-center gap-6 bg-background">
+      <ChatLayout></ChatLayout>
     </div>
   )
 }
